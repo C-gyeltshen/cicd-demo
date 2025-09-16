@@ -182,13 +182,32 @@ jobs:
             --file=dockerfile
             --exclude-base-image-vulns
             --sarif-file-output=snyk-container.sarif
+        continue-on-error: true
+
+      - name: Check if container SARIF file exists
+        id: check-container-sarif
+        run: |
+          if [ -f "snyk-container.sarif" ]; then
+            echo "sarif-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif-exists=false" >> $GITHUB_OUTPUT
+            echo "Warning: SARIF file snyk-container.sarif not found"
+          fi
 
       - name: Upload container scan results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: steps.check-container-sarif.outputs.sarif-exists == 'true'
         with:
           sarif_file: snyk-container.sarif
           category: snyk-container
+
+      - name: Archive container scan results
+        uses: actions/upload-artifact@v4
+        if: steps.check-container-sarif.outputs.sarif-exists == 'true'
+        with:
+          name: snyk-container-results
+          path: snyk-container.sarif
+          retention-days: 30
 
   # Monitor deployed dependencies (only on main branch)
   monitor:
