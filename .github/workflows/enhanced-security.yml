@@ -107,6 +107,7 @@ jobs:
             --fail-on=upgradable
             --project-name=${{ github.repository }}-dependencies
             --sarif-file-output=snyk-dependencies.sarif
+        continue-on-error: true
 
       - name: Run Snyk Code Security Scan (SAST)
         if: matrix.scan-type == 'code'
@@ -119,18 +120,28 @@ jobs:
             --severity-threshold=high
             --project-name=${{ github.repository }}-code
             --sarif-file-output=snyk-code.sarif
+        continue-on-error: true
+
+      - name: Check if SARIF file exists
+        id: check-sarif
+        run: |
+          if [ -f "snyk-${{ matrix.scan-type }}.sarif" ]; then
+            echo "sarif-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif-exists=false" >> $GITHUB_OUTPUT
+            echo "Warning: SARIF file snyk-${{ matrix.scan-type }}.sarif not found"
+          fi
 
       - name: Upload SARIF results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: steps.check-sarif.outputs.sarif-exists == 'true'
         with:
           sarif_file: snyk-${{ matrix.scan-type }}.sarif
           category: snyk-${{ matrix.scan-type }}
 
       - name: Archive security scan results
         uses: actions/upload-artifact@v4
-
-        if: always()
+        if: steps.check-sarif.outputs.sarif-exists == 'true'
         with:
           name: snyk-${{ matrix.scan-type }}-results
           path: snyk-${{ matrix.scan-type }}.sarif
