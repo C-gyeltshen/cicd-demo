@@ -65,7 +65,7 @@ ls -la
 
 Ensure all the necessary tools are installed:
 
-```bash 
+```bash
 # Check Java version (should be 17 or higher)
 java -version
 
@@ -81,10 +81,10 @@ mvn test
 
 **why install `Apache Maven?`**
 
-Apache Maven is primarily used as a build automation and project management tool, predominantly for Java-based applications. 
-
+Apache Maven is primarily used as a build automation and project management tool, predominantly for Java-based applications.
 
 ## 4. Project Overview
+
 The projectis a `Spring Boot application` with:
 
 - **Framework**: Spring Boot 3.1.2
@@ -94,7 +94,6 @@ The projectis a `Spring Boot application` with:
   - Spring Web
   - JavaFaker (for generating random data)
   - JaCoCo (for code coverage)
-
 
 ## 4. Setting up Snyk Account
 
@@ -122,5 +121,108 @@ The projectis a `Spring Boot application` with:
 
 ⚠️ **Security Note**: Keep your API token secure and never commit it to version control!
 
+![Get Snyk Token](./image/2.png)
+
+## 5. Configuring GitHub Secrets 
+
+### Step 5.1: Navigate to Repository Secrets
+
+1. **Open Your Repository**: Go to your `cicd-demo` repository on GitHub
+2. **Access Settings**: Click on "Settings" tab
+3. **Navigate to Secrets**: Go to "Secrets and variables" → "Actions"
+
+### Step 5.2: Add Snyk Token
+
+1. **Create New Secret**: Click "New repository secret"
+2. **Add Secret Details**:
+   - **Name**: `SNYK_TOKEN`
+   - **Value**: Paste your Snyk API token
+3. **Save Secret**: Click "Add secret"
+
+### Step 5.3: Verify Secret Configuration
+
+- The secret should now appear in your repository secrets list
+- It will show as `SNYK_TOKEN` with a green checkmark
+- The value will be hidden for security
+
+![GitHub Secrets](./image/1.png)
+
+## 6. Integrating Snyk with GitHub Actions 
+
+### Step 6.1: Basic Snyk Integration (Already Configured)
+
+The current workflow already includes basic Snyk scanning. Let's understand each part:
+
+```yaml
+security:
+  needs: test # Runs after test job completes
+  name: SA scan using snyk # Job name
+  runs-on: ubuntu-latest # Ubuntu runner
+  steps:
+    - uses: actions/checkout@master # Checkout code
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/maven@master # Use Snyk Maven action
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }} # Access secret token
+```
+
+### Step 6.2: Enhanced Snyk Configuration
+
+Let's create an enhanced version with more features:
+
+```yaml
+security:
+  needs: test
+  name: Security Analysis with Snyk
+  runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: "17"
+        distribution: "temurin"
+        cache: maven
+
+    - name: Build project for Snyk analysis
+      run: mvn clean compile
+
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/maven@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high --fail-on=upgradable
+
+    - name: Upload Snyk results to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: snyk.sarif
+
+    - name: Monitor dependencies with Snyk
+      uses: snyk/actions/maven@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        command: monitor
+```
+
+### Step 6.3: Understanding Snyk Action Parameters
+
+| Parameter                    | Description                             | Example                             |
+| ---------------------------- | --------------------------------------- | ----------------------------------- |
+| `--severity-threshold`       | Minimum severity to report              | `low`, `medium`, `high`, `critical` |
+| `--fail-on`                  | Conditions to fail the build            | `all`, `upgradable`, `patchable`    |
+| `--file`                     | Specific file to scan                   | `pom.xml`                           |
+| `--exclude-base-image-vulns` | Exclude base image vulnerabilities      | (for container scans)               |
+| `--json`                     | Output results in JSON format           |                                     |
+| `--sarif`                    | Output SARIF format for GitHub Security |                                     |
 
 
+
+
+C-gyeltshen_cicd-demo
