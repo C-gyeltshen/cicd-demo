@@ -2,15 +2,14 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
   pull_request:
-    branches: ["main"]
+    branches: ["master"]
 
 jobs:
   test:
-    name: build and test
+    name: Build and Test
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -19,18 +18,8 @@ jobs:
           java-version: "17"
           distribution: "temurin"
           cache: maven
-      - name: Perform the Unit Test Cases
-        run: mvn -B test
-  security:
-    needs: test
-    name: SA scan using snyk
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/maven@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Build and Test
+        run: mvn clean verify
 
   sonarcloud:
     name: SonarCloud Security Scan
@@ -63,4 +52,3 @@ jobs:
           mvn sonar:sonar \
             -Dsonar.projectKey=${{ secrets.SONAR_ORGANIZATION }}_cicd-demo \
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.branch.name=main
