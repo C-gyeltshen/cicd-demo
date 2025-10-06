@@ -1,5 +1,4 @@
-# Use a Java base image
-FROM openjdk:21-ea-15-jdk-slim-trixie
+FROM eclipse-temurin:21-jdk-alpine
 
 # https://medium.com/@skywalkerhunter/aws-docker-deploy-spring-boot-fe05a00191d9
 # added on 31st Oct
