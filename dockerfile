@@ -23,7 +23,7 @@ COPY target/cicd-demo-0.0.1-SNAPSHOT.jar /app/cicd-demo-0.0.1-SNAPSHOT.jar
 # ENV LOGGING_LEVEL=INFO
 
 # Expose the port that the Spring Boot application is listening on
-EXPOSE 5000
+EXPOSE 3000
 
 # Run the Spring Boot application when the container starts
 CMD ["java", "-jar", "cicd-demo-0.0.1-SNAPSHOT.jar"]
