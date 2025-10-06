@@ -40,7 +40,7 @@ jobs:
         with:
           target: "http://localhost:5000"
           rules_file_name: ".zap/rules.tsv"
-          cmd_options: "-a"
+          cmd_options: "-a -c .zap/scan-policy.xml"
 
       - name: Stop application container
         if: always()
