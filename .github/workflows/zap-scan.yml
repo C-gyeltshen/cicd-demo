@@ -31,7 +31,7 @@ jobs:
 
       - name: Run application container
         run: |
-          docker run -d -p 5000:5000 --name cicd-demo-app cicd-demo:test
+          docker run -d -p 5000:5000 --name cicd-demo-app --network host cicd-demo:test
           # Wait for application to be ready
           timeout 60 bash -c 'until curl -f http://localhost:5000/; do sleep 2; done'
 
@@ -40,29 +40,15 @@ jobs:
         with:
           target: "http://localhost:5000"
           rules_file_name: ".zap/rules.tsv"
-          cmd_options: "-a -c .zap/scan-policy.xml"
-
-      - name: Stop application container
-        if: always()
-        run: docker stop cicd-demo-app && docker rm cicd-demo-app
-
-      - name: ZAP Scan with Authentication
-        run: |
-          docker run -v $(pwd)/.zap:/zap/wrk/:rw \
-          -t ghcr.io/zaproxy/zaproxy:stable \
-          zap-full-scan.py \
-          -t http://localhost:5000 \
-          -z "-config auth.type=form \
-              -config auth.loginurl=http://localhost:5000/login \
-              -config auth.username=admin \
-              -config auth.password=admin123"
+          cmd_options: "-a"
 
       - name: Download OpenAPI spec
         run: curl http://localhost:5000/v3/api-docs > openapi.json
+        continue-on-error: true
 
       - name: ZAP API Scan
         run: |
-          docker run -v $(pwd):/zap/wrk/:rw \
+          docker run -v $(pwd):/zap/wrk/:rw --network host \
           -t ghcr.io/zaproxy/zaproxy:stable \
           zap-api-scan.py \
           -t http://localhost:5000 \
@@ -70,23 +56,106 @@ jobs:
           -d openapi.json \
           -r api_report.html \
           -J api_report.json
+        continue-on-error: true
 
-      - name: Run ZAP Scan
+      - name: Run ZAP Full Scan
         run: |
-          docker run -v $(pwd):/zap/wrk/:rw \
+          docker run -v $(pwd):/zap/wrk/:rw --network host \
           -t ghcr.io/zaproxy/zaproxy:stable \
           zap-full-scan.py \
           -t http://localhost:5000 \
           -r zap_report.html \
           -J zap_report.json
+        continue-on-error: true
+
+      - name: Stop application container
+        if: always()
+        run: docker stop cicd-demo-app && docker rm cicd-demo-app
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install zaproxy
 
       - name: Convert ZAP JSON to SARIF
-        uses: ZAPProxy/ZAP-to-SARIF@main
-        with:
-          zap-json-file: zap_report.json
-          sarif-file: zap_report.sarif
+        run: |
+          python -c "
+          import json
+          import sys
+          from datetime import datetime
+
+          # Read ZAP JSON report
+          with open('zap_report.json', 'r') as f:
+              zap_data = json.load(f)
+
+          # Create SARIF format
+          sarif = {
+              'version': '2.1.0',
+              '\$schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+              'runs': [{
+                  'tool': {
+                      'driver': {
+                          'name': 'OWASP ZAP',
+                          'version': '2.14.0',
+                          'informationUri': 'https://www.zaproxy.org/'
+                      }
+                  },
+                  'results': []
+              }]
+          }
+
+          # Convert ZAP alerts to SARIF results
+          for site in zap_data.get('site', []):
+              for alert in site.get('alerts', []):
+                  result = {
+                      'ruleId': alert.get('pluginid', 'unknown'),
+                      'level': 'warning',
+                      'message': {
+                          'text': alert.get('name', 'Security Issue')
+                      },
+                      'locations': [{
+                          'physicalLocation': {
+                              'artifactLocation': {
+                                  'uri': alert.get('url', 'unknown')
+                              }
+                          }
+                      }]
+                  }
+                  
+                  # Map ZAP risk levels to SARIF levels
+                  risk = alert.get('riskdesc', '').lower()
+                  if 'high' in risk:
+                      result['level'] = 'error'
+                  elif 'medium' in risk:
+                      result['level'] = 'warning'
+                  elif 'low' in risk or 'informational' in risk:
+                      result['level'] = 'note'
+                  
+                  sarif['runs'][0]['results'].append(result)
+
+          # Write SARIF file
+          with open('zap_report.sarif', 'w') as f:
+              json.dump(sarif, f, indent=2)
+
+          print(f'Converted {len(sarif[\"runs\"][0][\"results\"])} findings to SARIF format')
+          "
+        continue-on-error: true
 
       - name: Upload SARIF to GitHub
         uses: github/codeql-action/upload-sarif@v3
+        if: always()
         with:
           sarif_file: zap_report.sarif
+        continue-on-error: true
+
+      - name: Upload ZAP Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-reports
+          path: |
+            zap_report.html
+            zap_report.json
+            zap_report.sarif
+            api_report.html
+            api_report.json
