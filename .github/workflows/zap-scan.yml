@@ -31,7 +31,7 @@ jobs:
 
       - name: Run application container
         run: |
-          docker run -d -p 5000:5000 --name cicd-demo-app --network host cicd-demo:test
+          docker run -d -p 5000:5000 --name cicd-demo-app cicd-demo:test
           # Wait for application to be ready
           timeout 60 bash -c 'until curl -f http://localhost:5000/; do sleep 2; done'
 
@@ -51,7 +51,7 @@ jobs:
           docker run -v $(pwd):/zap/wrk/:rw --network host \
           -t ghcr.io/zaproxy/zaproxy:stable \
           zap-api-scan.py \
-          -t http://localhost:5000 \
+          -t http://172.17.0.1:5000 \
           -f openapi \
           -d openapi.json \
           -r api_report.html \
@@ -63,7 +63,7 @@ jobs:
           docker run -v $(pwd):/zap/wrk/:rw --network host \
           -t ghcr.io/zaproxy/zaproxy:stable \
           zap-full-scan.py \
-          -t http://localhost:5000 \
+          -t http://172.17.0.1:5000 \
           -r zap_report.html \
           -J zap_report.json
         continue-on-error: true
