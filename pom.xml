@@ -16,9 +16,6 @@
 	<packaging>jar</packaging>
 	<description>CICD Demo project for Spring Boot</description>
 	<properties>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
-		<java.version>21</java.version>
 		<java.version>21</java.version>
 		<sonar.organization>darryl1975</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
