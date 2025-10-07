@@ -31,9 +31,20 @@ jobs:
 
       - name: Run application container
         run: |
-          docker run -d -p 3000:3000 -e SERVER_PORT=3000 --name cicd-demo-app cicd-demo:test
-          # Wait for application to be ready
-          timeout 60 bash -c 'until curl -f http://localhost:3000/; do sleep 2; done'
+          # The application is started here, still using 8080
+          docker run -d -p 8080:8080 --name cicd-demo-app cicd-demo:test
+          # Wait for application to be ready (This is the step that is failing)
+          timeout 60 bash -c 'until curl -f http://localhost:8080/; do sleep 2; done'
+          
+      # --- NEW DEBUGGING STEP 1: Check running containers ---
+      - name: Check Container Status
+        if: failure() || success()
+        run: docker ps -a
+
+      # --- NEW DEBUGGING STEP 2: Get Application Logs ---
+      - name: Output Application Logs
+        if: failure() || success()
+        run: docker logs cicd-demo-app
 
       - name: Run ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
