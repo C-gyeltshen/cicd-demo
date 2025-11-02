@@ -17,7 +17,8 @@
 	<description>CICD Demo project for Spring Boot</description>
 	<properties>
 		<java.version>21</java.version>
-		<sonar.projectKey>C-gyeltshen_cicd-demo</sonar.projectKey>
+		<sonar.projectKey>***_cicd-demo</sonar.projectKey>
+    	<sonar.projectName>cicd-demo</sonar.projectName>
 		<sonar.organization>c-gyeltshen</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 		<sonar.branch.name>main</sonar.branch.name>
