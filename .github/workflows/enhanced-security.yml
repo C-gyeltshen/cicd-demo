@@ -1,5 +1,3 @@
-# Enhanced GitHub Actions workflow with comprehensive Snyk integration
-# This file demonstrates advanced Snyk configuration for the practical guide
 name: Enhanced CI/CD with Comprehensive Security
 
 on:
