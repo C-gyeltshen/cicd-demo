@@ -43,7 +43,21 @@
 
 	<build>
 		<plugins>
-			<!-- Existing plugins... -->
+			<!-- Spring Boot Maven Plugin - Creates executable JAR with manifest -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<mainClass>sg.edu.nus.iss.cicddemo.CicdDemoApplication</mainClass>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
 			<!-- SonarCloud Scanner -->
 			<plugin>
