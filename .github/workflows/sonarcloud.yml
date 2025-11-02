@@ -25,19 +25,15 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
+      - name: Build and run tests with coverage
+        run: mvn clean verify
 
-      - name: Build and analyze
+      - name: SonarCloud Scan
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed for PR decoration
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          mvn sonar:sonar \
             -Dsonar.projectKey=C-gyeltshen_cicd-demo \
             -Dsonar.organization=c-gyeltshen \
             -Dsonar.host.url=https://sonarcloud.io
