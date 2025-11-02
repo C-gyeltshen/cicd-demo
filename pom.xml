@@ -20,10 +20,7 @@
 		<sonar.projectKey>C-gyeltshen_cicd-demo</sonar.projectKey>
 		<sonar.organization>c-gyeltshen</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
-		<sonar.branch.name>main</sonar.branch.name>
-		<sonar.coverage.jacoco.xmlReportPaths>
-    		../app-it/target/site/jacoco-aggregate/jacoco.xml
-		</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 	</properties>
 	<dependencies>
 		<dependency>
