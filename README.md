@@ -1,4 +1,3 @@
-# CI/CD Demo Project
 
 ## Table of Contents
 
