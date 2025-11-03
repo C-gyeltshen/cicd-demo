@@ -36,4 +36,5 @@ jobs:
           mvn sonar:sonar \
             -Dsonar.projectKey=C-gyeltshen_cicd-demo \
             -Dsonar.organization=c-gyeltshen \
-            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.branch.name=main
